@@ -161,3 +161,4 @@ class InsightsHistory(Base):
     generated_at: Mapped[datetime] = mapped_column(
         default=datetime.utcnow
     )
+    
