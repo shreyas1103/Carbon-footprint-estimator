@@ -1,0 +1,5 @@
+date,description,amount
+not-a-date,Electricity Bill,1200.00
+2024-01-08,,980.00
+2024-01-10,Grocery,not-a-number
+2024-01-12,Valid Petrol,2500.00
