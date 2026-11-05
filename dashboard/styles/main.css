@@ -439,3 +439,47 @@ header[data-testid="stHeader"] {
     background: var(--soft-mint);
 }
 
+/* =========================================
+   AZURE DEPLOYMENT – NAVIGATION FIX
+========================================= */
+
+/* Sidebar text color */
+[data-testid="stSidebar"] {
+    color: #1F2933 !important;
+}
+
+/* Navigation links */
+[data-testid="stSidebar"] [data-testid="stPageLink"] a {
+    color: #1F2933 !important;
+    text-decoration: none !important;
+}
+
+/* Navigation labels */
+[data-testid="stSidebar"] [data-testid="stPageLink"] p,
+[data-testid="stSidebar"] [data-testid="stPageLink"] span {
+    color: #1F2933 !important;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+}
+
+/* Navigation hover */
+[data-testid="stSidebar"] [data-testid="stPageLink"] a:hover {
+    background-color: #E7F3EB !important;
+    color: #246B45 !important;
+}
+
+/* Normal buttons */
+.stButton button {
+    color: #1F2933 !important;
+}
+
+/* Primary buttons */
+.stButton button[kind="primary"] {
+    color: #FFFFFF !important;
+}
+
+/* Button labels */
+.stButton button p {
+    font-weight: 600 !important;
+}
+
