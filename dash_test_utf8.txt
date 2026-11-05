@@ -1,0 +1,74 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.14, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\Shreyas\AppData\Local\Programs\Python\Python313\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\Shreyas\Documents\CfootAg4
+configfile: pytest.ini
+plugins: anyio-4.14.2, cov-7.1.0
+collecting ... collected 58 items
+
+tests/test_dashboard_utils.py::test_normalise_renames_transaction_date PASSED [  1%]
+tests/test_dashboard_utils.py::test_normalise_parses_date PASSED         [  3%]
+tests/test_dashboard_utils.py::test_normalise_coerces_invalid_date_to_nat PASSED [  5%]
+tests/test_dashboard_utils.py::test_normalise_handles_missing_columns PASSED [  6%]
+tests/test_dashboard_utils.py::test_date_range_correct PASSED            [  8%]
+tests/test_dashboard_utils.py::test_date_range_empty_df PASSED           [ 10%]
+tests/test_dashboard_utils.py::test_date_range_all_nat PASSED            [ 12%]
+tests/test_dashboard_utils.py::test_filter_by_period_restricts_rows PASSED [ 13%]
+tests/test_dashboard_utils.py::test_filter_by_period_none_bounds_returns_all PASSED [ 15%]
+tests/test_dashboard_utils.py::test_filter_no_date_column PASSED         [ 17%]
+tests/test_dashboard_utils.py::test_get_estimated_returns_only_estimated_rows PASSED [ 18%]
+tests/test_dashboard_utils.py::test_get_estimated_excludes_none_co2e PASSED [ 20%]
+tests/test_dashboard_utils.py::test_get_estimated_empty_df PASSED        [ 22%]
+tests/test_dashboard_utils.py::test_get_estimated_nan_co2e_excluded PASSED [ 24%]
+tests/test_dashboard_utils.py::test_compute_kpis_total_co2e PASSED       [ 25%]
+tests/test_dashboard_utils.py::test_compute_kpis_transactions_count PASSED [ 27%]
+tests/test_dashboard_utils.py::test_compute_kpis_estimated_count PASSED  [ 29%]
+tests/test_dashboard_utils.py::test_compute_kpis_top_category_is_petrol PASSED [ 31%]
+tests/test_dashboard_utils.py::test_compute_kpis_avg_monthly PASSED      [ 32%]
+tests/test_dashboard_utils.py::test_compute_kpis_empty_df PASSED         [ 34%]
+tests/test_dashboard_utils.py::test_compute_kpis_no_estimated_rows PASSED [ 36%]
+tests/test_dashboard_utils.py::test_compute_kpis_nan_emissions_not_counted PASSED [ 37%]
+tests/test_dashboard_utils.py::test_monthly_trend_two_months PASSED      [ 39%]
+tests/test_dashboard_utils.py::test_monthly_trend_jan_total PASSED       [ 41%]
+tests/test_dashboard_utils.py::test_monthly_trend_feb_total PASSED       [ 43%]
+tests/test_dashboard_utils.py::test_monthly_trend_sorted_ascending PASSED [ 44%]
+tests/test_dashboard_utils.py::test_monthly_trend_empty PASSED           [ 46%]
+tests/test_dashboard_utils.py::test_monthly_trend_unsupported_not_included PASSED [ 48%]
+tests/test_dashboard_utils.py::test_category_breakdown_sorted_descending PASSED [ 50%]
+tests/test_dashboard_utils.py::test_category_breakdown_top_is_petrol PASSED [ 51%]
+tests/test_dashboard_utils.py::test_category_breakdown_unsupported_not_included PASSED [ 53%]
+tests/test_dashboard_utils.py::test_category_breakdown_empty PASSED      [ 55%]
+tests/test_dashboard_utils.py::test_donut_data_groups_small_categories PASSED [ 56%]
+tests/test_dashboard_utils.py::test_donut_data_total_preserved PASSED    [ 58%]
+tests/test_dashboard_utils.py::test_donut_data_pct_sums_to_one PASSED    [ 60%]
+tests/test_dashboard_utils.py::test_donut_data_empty_input PASSED        [ 62%]
+tests/test_dashboard_utils.py::test_cat_stats_totals PASSED              [ 63%]
+tests/test_dashboard_utils.py::test_cat_stats_pct_categorized PASSED     [ 65%]
+tests/test_dashboard_utils.py::test_cat_stats_empty PASSED               [ 67%]
+tests/test_dashboard_utils.py::test_highlights_returns_list PASSED       [ 68%]
+tests/test_dashboard_utils.py::test_highlights_each_has_icon_and_text PASSED [ 70%]
+tests/test_dashboard_utils.py::test_highlights_empty_when_no_data PASSED [ 72%]
+tests/test_dashboard_utils.py::test_highlights_top_category_mentioned PASSED [ 74%]
+tests/test_dashboard_utils.py::test_highlights_month_comparison_two_months PASSED [ 75%]
+tests/test_dashboard_utils.py::test_format_co2e_kg PASSED                [ 77%]
+tests/test_dashboard_utils.py::test_format_co2e_tonnes PASSED            [ 79%]
+tests/test_dashboard_utils.py::test_format_co2e_none PASSED              [ 81%]
+tests/test_dashboard_utils.py::test_format_co2e_zero PASSED              [ 82%]
+tests/test_dashboard_utils.py::test_friendly_category_simple PASSED      [ 84%]
+tests/test_dashboard_utils.py::test_friendly_category_multi_word PASSED  [ 86%]
+tests/test_dashboard_utils.py::test_friendly_category_single PASSED      [ 87%]
+tests/test_dashboard_utils.py::test_single_month_data PASSED             [ 89%]
+tests/test_dashboard_utils.py::test_all_unsupported_data PASSED          [ 91%]
+tests/test_dashboard_utils.py::test_mixed_nan_and_valid_emissions PASSED [ 93%]
+tests/test_dashboard_utils.py::test_invalid_dates_handled PASSED         [ 94%]
+tests/test_dashboard_utils.py::test_kpi_total_matches_category_breakdown_total PASSED [ 96%]
+tests/test_dashboard_utils.py::test_monthly_total_matches_kpi_total PASSED [ 98%]
+tests/test_dashboard_utils.py::test_donut_total_matches_category_breakdown_total PASSED [100%]
+
+============================== warnings summary ===============================
+tests/test_dashboard_utils.py::test_invalid_dates_handled
+  C:\Users\Shreyas\Documents\CfootAg4\dashboard\dashboard_utils.py:104: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 58 passed, 1 warning in 1.20s ========================

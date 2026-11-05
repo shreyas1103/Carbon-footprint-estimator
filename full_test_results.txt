@@ -1,0 +1,225 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.14, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\Shreyas\AppData\Local\Programs\Python\Python313\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\Shreyas\Documents\CfootAg4
+configfile: pytest.ini
+plugins: anyio-4.14.2, cov-7.1.0
+collecting ... collected 178 items
+
+tests/test_categorization.py::test_exact_electricity_match PASSED        [  0%]
+tests/test_categorization.py::test_exact_lpg_match PASSED                [  1%]
+tests/test_categorization.py::test_exact_petrol_match PASSED             [  1%]
+tests/test_categorization.py::test_exact_grocery_match PASSED            [  2%]
+tests/test_categorization.py::test_ambiguous_alias_needs_review PASSED   [  2%]
+tests/test_categorization.py::test_unrelated_string_returns_none PASSED  [  3%]
+tests/test_categorization.py::test_restaurant_maps_to_delivery_category PASSED [  3%]
+tests/test_categorization.py::test_all_matched_categories_are_canonical PASSED [  4%]
+tests/test_categorization.py::test_indane_gas_direct PASSED              [  5%]
+tests/test_categorization.py::test_indane_gas_booking_substring PASSED   [  5%]
+tests/test_categorization.py::test_bharat_gas_refill PASSED              [  6%]
+tests/test_categorization.py::test_hp_gas_cylinder PASSED                [  6%]
+tests/test_categorization.py::test_jio_fiber_bill PASSED                 [  7%]
+tests/test_categorization.py::test_jio_recharge_direct PASSED            [  7%]
+tests/test_categorization.py::test_bus_does_not_match_business PASSED    [  8%]
+tests/test_categorization.py::test_bus_matches_bus_ticket PASSED         [  8%]
+tests/test_categorization.py::test_short_alias_not_matched_in_substring PASSED [  9%]
+tests/test_categorization.py::test_apollo_ambiguous PASSED               [ 10%]
+tests/test_categorization.py::test_hotel_ambiguous PASSED                [ 10%]
+tests/test_categorization.py::test_iocl_ambiguous PASSED                 [ 11%]
+tests/test_categorization.py::test_hpcl_ambiguous PASSED                 [ 11%]
+tests/test_categorization.py::test_bpcl_ambiguous PASSED                 [ 12%]
+tests/test_categorization.py::test_longest_alias_wins PASSED             [ 12%]
+tests/test_categorization.py::test_empty_string_returns_none PASSED      [ 13%]
+tests/test_categorization.py::test_none_returns_none PASSED              [ 14%]
+tests/test_categorization.py::test_whitespace_only_returns_none PASSED   [ 14%]
+tests/test_categorization.py::test_fuzzy_near_match_electricity PASSED   [ 15%]
+tests/test_categorization.py::test_fuzzy_near_match_grocery PASSED       [ 15%]
+tests/test_categorization.py::test_fuzzy_unrelated_returns_none PASSED   [ 16%]
+tests/test_categorization.py::test_fuzzy_ambiguous_marked_needs_review PASSED [ 16%]
+tests/test_categorization.py::test_fuzzy_result_has_tier_3 PASSED        [ 17%]
+tests/test_categorization.py::test_canonical_categories_non_empty PASSED [ 17%]
+tests/test_categorization.py::test_supported_categories_subset_of_canonical PASSED [ 18%]
+tests/test_categorization.py::test_excluded_categories_in_canonical PASSED [ 19%]
+tests/test_categorization.py::test_pipeline_returns_for_known_merchant PASSED [ 19%]
+tests/test_categorization.py::test_pipeline_returns_unclassified_for_unknown PASSED [ 20%]
+tests/test_categorization.py::test_pipeline_confidence_in_range PASSED   [ 20%]
+tests/test_categorization.py::test_pipeline_tier_is_set_or_none PASSED   [ 21%]
+tests/test_categorization.py::test_pipeline_method_always_set PASSED     [ 21%]
+tests/test_categorization.py::test_pipeline_zomato_is_restaurant_delivery PASSED [ 22%]
+tests/test_categorization.py::test_pipeline_upi_gateway_not_assigned_category PASSED [ 23%]
+tests/test_categorization.py::test_all_outputs_have_canonical_category PASSED [ 23%]
+tests/test_categorization.py::test_pipeline_indane_gas_booking PASSED    [ 24%]
+tests/test_categorization.py::test_pipeline_bharat_gas_refill PASSED     [ 24%]
+tests/test_categorization.py::test_pipeline_hp_gas_cylinder PASSED       [ 25%]
+tests/test_categorization.py::test_pipeline_jio_fiber_bill PASSED        [ 25%]
+tests/test_categorization.py::test_pipeline_swiggy_order PASSED          [ 26%]
+tests/test_categorization.py::test_pipeline_bigbasket_purchase PASSED    [ 26%]
+tests/test_categorization.py::test_pipeline_hp_petrol_pump PASSED        [ 27%]
+tests/test_categorization.py::test_pipeline_irctc_ticket PASSED          [ 28%]
+tests/test_categorization.py::test_pipeline_uber_ride_payment PASSED     [ 28%]
+tests/test_categorization.py::test_pipeline_netflix_subscription PASSED  [ 29%]
+tests/test_categorization.py::test_pipeline_unknown_merchant_no_forced_category PASSED [ 29%]
+tests/test_categorization.py::test_pipeline_random_payment_no_forced_category PASSED [ 30%]
+tests/test_categorization.py::test_emissions_needs_review_not_estimated PASSED [ 30%]
+tests/test_categorization.py::test_emissions_unclassified_not_estimated PASSED [ 31%]
+tests/test_categorization.py::test_emissions_categorized_is_estimated PASSED [ 32%]
+tests/test_categorization.py::test_emissions_cash_withdrawal_excluded PASSED [ 32%]
+tests/test_categorization.py::test_emissions_refund_excluded PASSED      [ 33%]
+tests/test_categorization.py::test_emissions_negative_amount_excluded PASSED [ 33%]
+tests/test_categorization.py::test_stale_cache_auto_entry_invalidated_when_dict_disagrees PASSED [ 34%]
+tests/test_categorization.py::test_cache_lookup_returns_none_without_session PASSED [ 34%]
+tests/test_categorization.py::test_cache_lookup_returns_none_for_empty_key PASSED [ 35%]
+tests/test_categorization.py::test_cache_write_returns_false_without_session PASSED [ 35%]
+tests/test_categorization.py::test_cache_write_rejects_non_canonical PASSED [ 36%]
+tests/test_categorization.py::test_pipeline_apollo_stays_needs_review PASSED [ 37%]
+tests/test_categorization.py::test_pipeline_hotel_stays_needs_review PASSED [ 37%]
+tests/test_categorization.py::test_pipeline_iocl_stays_needs_review PASSED [ 38%]
+tests/test_categorization.py::test_pipeline_bpcl_stays_needs_review PASSED [ 38%]
+tests/test_categorization.py::test_pipeline_hpcl_stays_needs_review PASSED [ 39%]
+tests/test_categorization.py::test_pipeline_bus_stays_needs_review FAILED [ 39%]
+tests/test_categorization.py::test_ambiguous_result_no_emissions PASSED  [ 40%]
+tests/test_categorization.py::test_ambiguous_apollo_no_emissions PASSED  [ 41%]
+tests/test_categorization.py::test_ambiguous_hotel_no_emissions PASSED   [ 41%]
+tests/test_categorization.py::test_ood_vocabulary_coverage_function_exists PASSED [ 42%]
+tests/test_categorization.py::test_ood_unknown_merchant_low_coverage PASSED [ 42%]
+tests/test_categorization.py::test_ood_known_merchant_higher_coverage PASSED [ 43%]
+tests/test_categorization.py::test_ood_empty_input_returns_zero PASSED   [ 43%]
+tests/test_categorization.py::test_ood_unknown_merchant_not_classified PASSED [ 44%]
+tests/test_categorization.py::test_ood_random_gibberish_not_classified PASSED [ 44%]
+tests/test_categorization.py::test_ood_misleading_confidence_prevented PASSED [ 45%]
+tests/test_categorization.py::test_tier1_missing_model_returns_none PASSED [ 46%]
+tests/test_categorization.py::test_tier1_empty_string_returns_none PASSED [ 46%]
+tests/test_cleaning.py::test_basic_whitespace_stripped PASSED            [ 47%]
+tests/test_cleaning.py::test_upi_prefix_removed PASSED                   [ 47%]
+tests/test_cleaning.py::test_neft_prefix_removed PASSED                  [ 48%]
+tests/test_cleaning.py::test_long_reference_number_removed PASSED        [ 48%]
+tests/test_cleaning.py::test_masked_account_removed PASSED               [ 49%]
+tests/test_cleaning.py::test_upi_handle_removed PASSED                   [ 50%]
+tests/test_cleaning.py::test_separator_normalized PASSED                 [ 50%]
+tests/test_cleaning.py::test_idempotent PASSED                           [ 51%]
+tests/test_cleaning.py::test_merchant_tokens_preserved PASSED            [ 51%]
+tests/test_cleaning.py::test_distinct_merchants_not_merged PASSED        [ 52%]
+tests/test_cleaning.py::test_unicode_normalized PASSED                   [ 52%]
+tests/test_cleaning.py::test_punctuation_handled PASSED                  [ 53%]
+tests/test_cleaning.py::test_short_reference_number_kept PASSED          [ 53%]
+tests/test_cleaning.py::test_payment_prefix_pos_removed PASSED           [ 54%]
+tests/test_cleaning.py::test_to_prefix_removed PASSED                    [ 55%]
+tests/test_emissions.py::test_route_a_electricity PASSED                 [ 55%]
+tests/test_emissions.py::test_route_a_lpg PASSED                         [ 56%]
+tests/test_emissions.py::test_route_a_petrol PASSED                      [ 56%]
+tests/test_emissions.py::test_route_a_diesel PASSED                      [ 57%]
+tests/test_emissions.py::test_route_a_grocery PASSED                     [ 57%]
+tests/test_emissions.py::test_route_a_dairy PASSED                       [ 58%]
+tests/test_emissions.py::test_route_a_full_precision_preserved PASSED    [ 58%]
+tests/test_emissions.py::test_route_b_electricity_kwh PASSED             [ 59%]
+tests/test_emissions.py::test_no_double_application_route_a PASSED       [ 60%]
+tests/test_emissions.py::test_route_b_uses_physical_factor_only PASSED   [ 60%]
+tests/test_emissions.py::test_restaurant_unsupported PASSED              [ 61%]
+tests/test_emissions.py::test_clothing_unsupported PASSED                [ 61%]
+tests/test_emissions.py::test_ecommerce_unsupported PASSED               [ 62%]
+tests/test_emissions.py::test_unclassified_unsupported PASSED            [ 62%]
+tests/test_emissions.py::test_cash_withdrawal_excluded PASSED            [ 63%]
+tests/test_emissions.py::test_refund_credit_excluded PASSED              [ 64%]
+tests/test_emissions.py::test_negative_amount_excluded PASSED            [ 64%]
+tests/test_emissions.py::test_usd_not_estimated PASSED                   [ 65%]
+tests/test_emissions.py::test_gbp_not_estimated PASSED                   [ 65%]
+tests/test_emissions.py::test_coverage_metrics_basic PASSED              [ 66%]
+tests/test_emissions.py::test_coverage_metrics_zero_denominator PASSED   [ 66%]
+tests/test_emissions.py::test_coverage_metrics_no_unsupported_in_total PASSED [ 67%]
+tests/test_pdf_reader.py::test_pdf_no_errors PASSED                      [ 67%]
+tests/test_pdf_reader.py::test_pdf_rows_extracted PASSED                 [ 68%]
+tests/test_pdf_reader.py::test_pdf_dataframe_not_empty PASSED            [ 69%]
+tests/test_pdf_reader.py::test_pdf_required_columns PASSED               [ 69%]
+tests/test_pdf_reader.py::test_pdf_source_parser PASSED                  [ 70%]
+tests/test_pdf_reader.py::test_pdf_dates_are_valid PASSED                [ 70%]
+tests/test_pdf_reader.py::test_pdf_amounts_are_positive PASSED           [ 71%]
+tests/test_pdf_reader.py::test_pdf_descriptions_not_blank PASSED         [ 71%]
+tests/test_pdf_reader.py::test_pdf_electricity_found PASSED              [ 72%]
+tests/test_pdf_reader.py::test_pdf_lpg_found PASSED                      [ 73%]
+tests/test_pdf_reader.py::test_pdf_refund_credit_marked FAILED           [ 73%]
+tests/test_pdf_reader.py::test_pdf_no_balance_rows PASSED                [ 74%]
+tests/test_pdf_reader.py::test_empty_bytes_returns_error PASSED          [ 74%]
+tests/test_pdf_reader.py::test_non_pdf_bytes_returns_error PASSED        [ 75%]
+tests/test_pdf_reader.py::test_oversized_file_rejected PASSED            [ 75%]
+tests/test_pdf_reader.py::test_clean_money_basic PASSED                  [ 76%]
+tests/test_pdf_reader.py::test_clean_money_negative_parens PASSED        [ 76%]
+tests/test_pdf_reader.py::test_clean_money_rupee_symbol PASSED           [ 77%]
+tests/test_pdf_reader.py::test_clean_money_rs_prefix PASSED              [ 78%]
+tests/test_pdf_reader.py::test_clean_money_none PASSED                   [ 78%]
+tests/test_pdf_reader.py::test_clean_money_blank PASSED                  [ 79%]
+tests/test_pdf_reader.py::test_is_money_valid PASSED                     [ 79%]
+tests/test_pdf_reader.py::test_is_money_invalid PASSED                   [ 80%]
+tests/test_pdf_reader.py::test_parse_date_iso PASSED                     [ 80%]
+tests/test_pdf_reader.py::test_parse_date_dd_mon_yy PASSED               [ 81%]
+tests/test_pdf_reader.py::test_parse_date_slashes PASSED                 [ 82%]
+tests/test_pdf_reader.py::test_parse_date_invalid PASSED                 [ 82%]
+tests/test_pdf_reader.py::test_normalize_text PASSED                     [ 83%]
+tests/test_pdf_reader.py::test_clean_description_strips_numbers PASSED   [ 83%]
+tests/test_pdf_reader.py::test_group_words_into_lines_basic PASSED       [ 84%]
+tests/test_pdf_reader.py::test_find_headers_returns_dict PASSED          [ 84%]
+tests/test_validation.py::test_normalize_header_strips_whitespace PASSED [ 85%]
+tests/test_validation.py::test_normalize_header_collapses_spaces PASSED  [ 85%]
+tests/test_validation.py::test_normalize_header_lowercases PASSED        [ 86%]
+tests/test_validation.py::test_valid_csv_passes PASSED                   [ 87%]
+tests/test_validation.py::test_valid_csv_with_optional_columns PASSED    [ 87%]
+tests/test_validation.py::test_missing_amount_column PASSED              [ 88%]
+tests/test_validation.py::test_missing_description_column PASSED         [ 88%]
+tests/test_validation.py::test_missing_date_column PASSED                [ 89%]
+tests/test_validation.py::test_header_case_insensitive PASSED            [ 89%]
+tests/test_validation.py::test_header_whitespace_normalized PASSED       [ 90%]
+tests/test_validation.py::test_sensitive_account_number_rejected PASSED  [ 91%]
+tests/test_validation.py::test_sensitive_card_number_rejected PASSED     [ 91%]
+tests/test_validation.py::test_sensitive_ifsc_rejected PASSED            [ 92%]
+tests/test_validation.py::test_sensitive_upi_id_rejected PASSED          [ 92%]
+tests/test_validation.py::test_sensitive_values_not_echoed_in_errors PASSED [ 93%]
+tests/test_validation.py::test_empty_dataframe PASSED                    [ 93%]
+tests/test_validation.py::test_headers_only PASSED                       [ 94%]
+tests/test_validation.py::test_invalid_date_row PASSED                   [ 94%]
+tests/test_validation.py::test_blank_description_row PASSED              [ 95%]
+tests/test_validation.py::test_nonnumeric_amount_row PASSED              [ 96%]
+tests/test_validation.py::test_nan_amount_row PASSED                     [ 96%]
+tests/test_validation.py::test_negative_amount_is_valid_row PASSED       [ 97%]
+tests/test_validation.py::test_duplicate_headers PASSED                  [ 97%]
+tests/test_validation.py::test_non_inr_currency_triggers_warning PASSED  [ 98%]
+tests/test_validation.py::test_pydantic_rejects_extra_fields PASSED      [ 98%]
+tests/test_validation.py::test_pydantic_accepts_valid_row PASSED         [ 99%]
+tests/test_validation.py::test_pydantic_rejects_blank_description PASSED [100%]
+
+================================== FAILURES ===================================
+____________________ test_pipeline_bus_stays_needs_review _____________________
+tests\test_categorization.py:559: in test_pipeline_bus_stays_needs_review
+    assert result.status == "needs_review"
+E   AssertionError: assert 'categorized' == 'needs_review'
+E     
+E     - needs_review
+E     + categorized
+________________________ test_pdf_refund_credit_marked ________________________
+tests\test_pdf_reader.py:133: in test_pdf_refund_credit_marked
+    assert (refund_rows["payment_method"] == "credit").any()
+E   AssertionError: assert np.False_
+E    +  where np.False_ = any()
+E    +    where any = 4    debit\nName: payment_method, dtype: str == 'credit'.any
+============================== warnings summary ===============================
+tests/test_categorization.py::test_pipeline_returns_unclassified_for_unknown
+tests/test_categorization.py::test_pipeline_returns_unclassified_for_unknown
+tests/test_categorization.py::test_pipeline_returns_unclassified_for_unknown
+tests/test_categorization.py::test_pipeline_returns_unclassified_for_unknown
+  C:\Users\Shreyas\AppData\Local\Programs\Python\Python313\Lib\site-packages\joblib\numpy_pickle.py:207: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+  As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+    array.shape = self.shape
+
+tests/test_categorization.py::test_pipeline_returns_unclassified_for_unknown
+  C:\Users\Shreyas\AppData\Local\Programs\Python\Python313\Lib\site-packages\joblib\numpy_pickle.py:204: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+  As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+    array.shape = self.shape[::-1]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_categorization.py::test_pipeline_bus_stays_needs_review - AssertionError: assert 'categorized' == 'needs_review'
+  
+  - needs_review
+  + categorized
+FAILED tests/test_pdf_reader.py::test_pdf_refund_credit_marked - AssertionError: assert np.False_
+ +  where np.False_ = any()
+ +    where any = 4    debit\nName: payment_method, dtype: str == 'credit'.any
+================== 2 failed, 176 passed, 5 warnings in 6.76s ==================

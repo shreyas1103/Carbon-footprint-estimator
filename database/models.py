@@ -113,9 +113,9 @@ class MerchantCache(Base):
     source = Column(Text, nullable=True)
     tier = Column(SmallInteger, nullable=True)
     review_status = Column(Text, nullable=False, default="auto")  # approved|auto|needs_review
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    last_used = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime(timezone=True),nullable=False, server_default=func.now())
+    last_used = Column(DateTime(timezone=True),nullable=False, server_default=func.now())
+    updated_at = Column(DateTime(timezone=True),nullable=False, server_default=func.now(), onupdate=func.now())
 
     __table_args__ = (
         CheckConstraint(

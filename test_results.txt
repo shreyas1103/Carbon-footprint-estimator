@@ -1,0 +1,107 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.14, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\Shreyas\AppData\Local\Programs\Python\Python313\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\Shreyas\Documents\CfootAg4
+configfile: pytest.ini
+plugins: anyio-4.14.2, cov-7.1.0
+collecting ... collected 82 items
+
+tests/test_categorization.py::test_exact_electricity_match PASSED        [  1%]
+tests/test_categorization.py::test_exact_lpg_match PASSED                [  2%]
+tests/test_categorization.py::test_exact_petrol_match PASSED             [  3%]
+tests/test_categorization.py::test_exact_grocery_match PASSED            [  4%]
+tests/test_categorization.py::test_ambiguous_alias_needs_review PASSED   [  6%]
+tests/test_categorization.py::test_unrelated_string_returns_none PASSED  [  7%]
+tests/test_categorization.py::test_restaurant_maps_to_delivery_category PASSED [  8%]
+tests/test_categorization.py::test_all_matched_categories_are_canonical PASSED [  9%]
+tests/test_categorization.py::test_indane_gas_direct PASSED              [ 10%]
+tests/test_categorization.py::test_indane_gas_booking_substring PASSED   [ 12%]
+tests/test_categorization.py::test_bharat_gas_refill PASSED              [ 13%]
+tests/test_categorization.py::test_hp_gas_cylinder PASSED                [ 14%]
+tests/test_categorization.py::test_jio_fiber_bill PASSED                 [ 15%]
+tests/test_categorization.py::test_jio_recharge_direct PASSED            [ 17%]
+tests/test_categorization.py::test_bus_does_not_match_business PASSED    [ 18%]
+tests/test_categorization.py::test_bus_matches_bus_ticket PASSED         [ 19%]
+tests/test_categorization.py::test_short_alias_not_matched_in_substring PASSED [ 20%]
+tests/test_categorization.py::test_apollo_ambiguous PASSED               [ 21%]
+tests/test_categorization.py::test_hotel_ambiguous PASSED                [ 23%]
+tests/test_categorization.py::test_iocl_ambiguous PASSED                 [ 24%]
+tests/test_categorization.py::test_hpcl_ambiguous PASSED                 [ 25%]
+tests/test_categorization.py::test_bpcl_ambiguous PASSED                 [ 26%]
+tests/test_categorization.py::test_longest_alias_wins PASSED             [ 28%]
+tests/test_categorization.py::test_empty_string_returns_none PASSED      [ 29%]
+tests/test_categorization.py::test_none_returns_none PASSED              [ 30%]
+tests/test_categorization.py::test_whitespace_only_returns_none PASSED   [ 31%]
+tests/test_categorization.py::test_fuzzy_near_match_electricity PASSED   [ 32%]
+tests/test_categorization.py::test_fuzzy_near_match_grocery PASSED       [ 34%]
+tests/test_categorization.py::test_fuzzy_unrelated_returns_none PASSED   [ 35%]
+tests/test_categorization.py::test_fuzzy_ambiguous_marked_needs_review PASSED [ 36%]
+tests/test_categorization.py::test_fuzzy_result_has_tier_3 PASSED        [ 37%]
+tests/test_categorization.py::test_canonical_categories_non_empty PASSED [ 39%]
+tests/test_categorization.py::test_supported_categories_subset_of_canonical PASSED [ 40%]
+tests/test_categorization.py::test_excluded_categories_in_canonical PASSED [ 41%]
+tests/test_categorization.py::test_pipeline_returns_for_known_merchant PASSED [ 42%]
+tests/test_categorization.py::test_pipeline_returns_unclassified_for_unknown PASSED [ 43%]
+tests/test_categorization.py::test_pipeline_confidence_in_range PASSED   [ 45%]
+tests/test_categorization.py::test_pipeline_tier_is_set_or_none PASSED   [ 46%]
+tests/test_categorization.py::test_pipeline_method_always_set PASSED     [ 47%]
+tests/test_categorization.py::test_pipeline_zomato_is_restaurant_delivery PASSED [ 48%]
+tests/test_categorization.py::test_pipeline_upi_gateway_not_assigned_category PASSED [ 50%]
+tests/test_categorization.py::test_all_outputs_have_canonical_category PASSED [ 51%]
+tests/test_categorization.py::test_pipeline_indane_gas_booking PASSED    [ 52%]
+tests/test_categorization.py::test_pipeline_bharat_gas_refill PASSED     [ 53%]
+tests/test_categorization.py::test_pipeline_hp_gas_cylinder PASSED       [ 54%]
+tests/test_categorization.py::test_pipeline_jio_fiber_bill PASSED        [ 56%]
+tests/test_categorization.py::test_pipeline_swiggy_order PASSED          [ 57%]
+tests/test_categorization.py::test_pipeline_bigbasket_purchase PASSED    [ 58%]
+tests/test_categorization.py::test_pipeline_hp_petrol_pump PASSED        [ 59%]
+tests/test_categorization.py::test_pipeline_irctc_ticket PASSED          [ 60%]
+tests/test_categorization.py::test_pipeline_uber_ride_payment PASSED     [ 62%]
+tests/test_categorization.py::test_pipeline_netflix_subscription PASSED  [ 63%]
+tests/test_categorization.py::test_pipeline_unknown_merchant_no_forced_category PASSED [ 64%]
+tests/test_categorization.py::test_pipeline_random_payment_no_forced_category PASSED [ 65%]
+tests/test_categorization.py::test_emissions_needs_review_not_estimated PASSED [ 67%]
+tests/test_categorization.py::test_emissions_unclassified_not_estimated PASSED [ 68%]
+tests/test_categorization.py::test_emissions_categorized_is_estimated PASSED [ 69%]
+tests/test_categorization.py::test_emissions_cash_withdrawal_excluded PASSED [ 70%]
+tests/test_categorization.py::test_emissions_refund_excluded PASSED      [ 71%]
+tests/test_categorization.py::test_emissions_negative_amount_excluded PASSED [ 73%]
+tests/test_emissions.py::test_route_a_electricity PASSED                 [ 74%]
+tests/test_emissions.py::test_route_a_lpg PASSED                         [ 75%]
+tests/test_emissions.py::test_route_a_petrol PASSED                      [ 76%]
+tests/test_emissions.py::test_route_a_diesel PASSED                      [ 78%]
+tests/test_emissions.py::test_route_a_grocery PASSED                     [ 79%]
+tests/test_emissions.py::test_route_a_dairy PASSED                       [ 80%]
+tests/test_emissions.py::test_route_a_full_precision_preserved PASSED    [ 81%]
+tests/test_emissions.py::test_route_b_electricity_kwh PASSED             [ 82%]
+tests/test_emissions.py::test_no_double_application_route_a PASSED       [ 84%]
+tests/test_emissions.py::test_route_b_uses_physical_factor_only PASSED   [ 85%]
+tests/test_emissions.py::test_restaurant_unsupported PASSED              [ 86%]
+tests/test_emissions.py::test_clothing_unsupported PASSED                [ 87%]
+tests/test_emissions.py::test_ecommerce_unsupported PASSED               [ 89%]
+tests/test_emissions.py::test_unclassified_unsupported PASSED            [ 90%]
+tests/test_emissions.py::test_cash_withdrawal_excluded PASSED            [ 91%]
+tests/test_emissions.py::test_refund_credit_excluded PASSED              [ 92%]
+tests/test_emissions.py::test_negative_amount_excluded PASSED            [ 93%]
+tests/test_emissions.py::test_usd_not_estimated PASSED                   [ 95%]
+tests/test_emissions.py::test_gbp_not_estimated PASSED                   [ 96%]
+tests/test_emissions.py::test_coverage_metrics_basic PASSED              [ 97%]
+tests/test_emissions.py::test_coverage_metrics_zero_denominator PASSED   [ 98%]
+tests/test_emissions.py::test_coverage_metrics_no_unsupported_in_total PASSED [100%]
+
+============================== warnings summary ===============================
+tests/test_categorization.py::test_pipeline_returns_unclassified_for_unknown
+tests/test_categorization.py::test_pipeline_returns_unclassified_for_unknown
+tests/test_categorization.py::test_pipeline_returns_unclassified_for_unknown
+tests/test_categorization.py::test_pipeline_returns_unclassified_for_unknown
+  C:\Users\Shreyas\AppData\Local\Programs\Python\Python313\Lib\site-packages\joblib\numpy_pickle.py:207: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+  As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+    array.shape = self.shape
+
+tests/test_categorization.py::test_pipeline_returns_unclassified_for_unknown
+  C:\Users\Shreyas\AppData\Local\Programs\Python\Python313\Lib\site-packages\joblib\numpy_pickle.py:204: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+  As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+    array.shape = self.shape[::-1]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================= 82 passed, 5 warnings in 5.79s ========================

@@ -205,7 +205,19 @@ def estimate(
             estimation_notes=f"Excluded: {exclusion_reason}",
         )
 
-    # ---- 2. Currency check ----
+    # ---- 2. Unverified categories — never calculate emissions for uncertain results ----
+    if category_status in ("needs_review", "unclassified"):
+        return EmissionsResult(
+            factor_id=None, factor_method=None,
+            activity_quantity=None, activity_unit=None,
+            estimated_co2e_kg=None,
+            emissions_status="unsupported",
+            emissions_confidence=None,
+            factor_source=None, factor_year=None,
+            estimation_notes=f"AMBIGUOUS_CATEGORY: category_status={category_status}. Skipping emissions.",
+        )
+
+    # ---- 3. Currency check ----
     if currency and currency.upper() != "INR":
         return EmissionsResult(
             factor_id=None, factor_method=None,
@@ -217,7 +229,7 @@ def estimate(
             estimation_notes=f"NON_INR_CURRENCY: {currency}. Cannot apply INR factors.",
         )
 
-    # ---- 3. Negative amounts (refunds not already categorized) ----
+    # ---- 4. Negative amounts (refunds not already categorized) ----
     if isinstance(amount, (int, float)) and amount < 0:
         return EmissionsResult(
             factor_id=None, factor_method=None,

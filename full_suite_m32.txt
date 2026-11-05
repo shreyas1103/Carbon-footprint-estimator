@@ -1,0 +1,46 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: C:\Users\Shreyas\Documents\CfootAg4
+configfile: pytest.ini
+plugins: anyio-4.14.2, cov-7.1.0
+collected 254 items
+
+tests\test_categorization.py ........................................... [ 16%]
+........................................                                 [ 32%]
+tests\test_cleaning.py ...............                                   [ 38%]
+tests\test_dashboard_utils.py .......................................... [ 55%]
+................                                                         [ 61%]
+tests\test_emissions.py ......................                           [ 70%]
+tests\test_pdf_reader.py ..........F....................                 [ 82%]
+tests\test_tier5_llm.py ..................                               [ 89%]
+tests\test_validation.py ...........................                     [100%]
+
+================================== FAILURES ===================================
+________________________ test_pdf_refund_credit_marked ________________________
+tests\test_pdf_reader.py:133: in test_pdf_refund_credit_marked
+    assert (refund_rows["payment_method"] == "credit").any()
+E   AssertionError: assert np.False_
+E    +  where np.False_ = any()
+E    +    where any = 4    debit\nName: payment_method, dtype: str == 'credit'.any
+============================== warnings summary ===============================
+tests/test_categorization.py::test_pipeline_returns_unclassified_for_unknown
+tests/test_categorization.py::test_pipeline_returns_unclassified_for_unknown
+tests/test_categorization.py::test_pipeline_returns_unclassified_for_unknown
+tests/test_categorization.py::test_pipeline_returns_unclassified_for_unknown
+  C:\Users\Shreyas\AppData\Local\Programs\Python\Python313\Lib\site-packages\joblib\numpy_pickle.py:207: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+  As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+    array.shape = self.shape
+
+tests/test_categorization.py::test_pipeline_returns_unclassified_for_unknown
+  C:\Users\Shreyas\AppData\Local\Programs\Python\Python313\Lib\site-packages\joblib\numpy_pickle.py:204: DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+  As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+    array.shape = self.shape[::-1]
+
+tests/test_dashboard_utils.py::test_invalid_dates_handled
+  C:\Users\Shreyas\Documents\CfootAg4\dashboard\dashboard_utils.py:104: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_pdf_reader.py::test_pdf_refund_credit_marked - AssertionErr...
+================== 1 failed, 253 passed, 6 warnings in 5.49s ==================

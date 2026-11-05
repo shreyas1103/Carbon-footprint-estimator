@@ -3,13 +3,26 @@ pipeline/categorization/tier2_dictionary.py
 Tier 2: Exact normalized alias/dictionary matching.
 High-confidence (1.0) for unambiguous aliases.
 Ambiguous aliases → needs_review.
+
+Matching strategy:
+  1. Direct exact match on normalized text → confidence 1.0 (or 0.5 if ambiguous)
+  2. Word-boundary-aware substring match → confidence 0.9 (or 0.4 if ambiguous)
+     - Uses regex word boundaries to prevent "bus" matching "business"
+     - Prefers the longest matching alias
+     - Skips aliases ≤ 2 characters for substring matching (too short)
 """
 from __future__ import annotations
 
+import logging
 import re
 from typing import Optional
 
 from pipeline.categorization.categories import CANONICAL_CATEGORIES, CategoryResult
+
+logger = logging.getLogger(__name__)
+
+# Minimum alias length for substring matching (avoid false positives from "vi", "cr", etc.)
+MIN_SUBSTRING_ALIAS_LEN = 3
 
 # ---------------------------------------------------------------------------
 # Version-controlled alias dictionary
@@ -94,7 +107,7 @@ ALIAS_MAP: dict[str, tuple[str, Optional[str], bool]] = {
     "restaurant": ("food.restaurant_delivery", "Restaurant", False),
     "cafe": ("food.restaurant_delivery", "Cafe", False),
     "food delivery": ("food.restaurant_delivery", "Food delivery", False),
-    "hotel": ("food.restaurant_delivery", "Restaurant", True),  # ambiguous
+    "hotel": ("food.restaurant_delivery", "Restaurant", True),  # ambiguous: hotel stay vs restaurant
 
     # Clothing / apparel
     "clothing": ("shopping.clothing", "Clothing", False),
@@ -148,12 +161,14 @@ ALIAS_MAP: dict[str, tuple[str, Optional[str], bool]] = {
     # Healthcare
     "pharmacy": ("healthcare", "Pharmacy", False),
     "hospital": ("healthcare", "Hospital", False),
-    "apollo": ("healthcare", "Healthcare", True),  # Apollo could be Apollo Pharmacy or Apollo Hospitals
+    "apollo": ("healthcare", "Healthcare", True),  # Apollo Pharmacy vs Apollo Hospitals — ambiguous
     "medplus": ("healthcare", "Pharmacy", False),
     "1mg": ("healthcare", "Pharmacy", False),
     "pharmeasy": ("healthcare", "Pharmacy", False),
 
     # Telecom
+    "jio fiber": ("telecom_internet", "Broadband", False),
+    "jio recharge": ("telecom_internet", "Telecom", False),
     "jio": ("telecom_internet", "Telecom", False),
     "airtel": ("telecom_internet", "Telecom", False),
     "vi": ("telecom_internet", "Telecom", True),   # ambiguous — VI is Vodafone Idea but also common abbreviation
@@ -196,7 +211,7 @@ def _normalize(text: str) -> str:
 
 def classify(merchant_key: str) -> Optional[CategoryResult]:
     """
-    Perform exact normalized alias lookup.
+    Perform exact normalized alias lookup, then word-boundary substring match.
     Returns CategoryResult if matched, else None.
     Ambiguous aliases return needs_review status.
     """
@@ -204,10 +219,16 @@ def classify(merchant_key: str) -> Optional[CategoryResult]:
         return None
 
     norm = _normalize(merchant_key)
+    if not norm:
+        return None
 
-    # Direct match
+    # ---- 1. Direct exact match ----
     if norm in ALIAS_MAP:
         cat, subcat, ambiguous = ALIAS_MAP[norm]
+        logger.debug(
+            "Tier 2 exact match: '%s' → %s (ambiguous=%s)",
+            norm, cat, ambiguous,
+        )
         return CategoryResult(
             category=cat,
             subcategory=subcat,
@@ -220,16 +241,29 @@ def classify(merchant_key: str) -> Optional[CategoryResult]:
             reason=f"alias_match:{norm}",
         )
 
-    # Substring match (check if any known alias is contained in the merchant key)
+    # ---- 2. Word-boundary-aware substring match ----
+    # Find the longest alias that appears as a complete word/phrase in the input.
+    # Uses regex word boundaries (\b) to prevent "bus" matching "business".
     best: Optional[tuple[str, str, Optional[str], bool]] = None
     best_len = 0
+
     for alias, (cat, subcat, ambiguous) in ALIAS_MAP.items():
-        if alias in norm and len(alias) > best_len:
+        # Skip very short aliases for substring matching — too many false positives
+        if len(alias) < MIN_SUBSTRING_ALIAS_LEN:
+            continue
+
+        # Word-boundary check: alias must appear as whole word(s) in the normalized text
+        pattern = r"\b" + re.escape(alias) + r"\b"
+        if re.search(pattern, norm) and len(alias) > best_len:
             best = (alias, cat, subcat, ambiguous)
             best_len = len(alias)
 
     if best:
         alias, cat, subcat, ambiguous = best
+        logger.debug(
+            "Tier 2 substring match: '%s' found in '%s' → %s (ambiguous=%s)",
+            alias, norm, cat, ambiguous,
+        )
         return CategoryResult(
             category=cat,
             subcategory=subcat,

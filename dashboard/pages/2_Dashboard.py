@@ -1,187 +1,274 @@
 """
 dashboard/pages/2_Dashboard.py
-Overview dashboard: CO2e totals, category breakdown, monthly trend.
+EcoTrack — Personal Carbon Intelligence Dashboard
+Flagship executive sustainability dashboard featuring:
+  A. Header & Period Filter
+  B. Key Metric Cards (KPIs)
+  C. Monthly Emissions Trend (Plotly Area)
+  D. Emissions by Category (Plotly Horizontal Bar)
+  E. Emission Composition (Plotly Donut)
+  F. Sustainability Highlights
+  G. Categorization Quality & Factor Coverage
+  H. Recent Transactions (Compact List)
 """
+from __future__ import annotations
+
 import os
 import sys
 
+# Ensure project root is in path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pandas as pd
 import streamlit as st
 
+from dashboard_utils import (
+    load_dashboard_data,
+    get_date_range,
+    filter_by_period,
+    compute_kpis,
+    get_monthly_trend,
+    get_category_breakdown,
+    get_donut_data,
+    get_categorization_stats,
+    get_sustainability_highlights,
+    format_co2e,
+)
+from components.sidebar import render_sidebar
+from components.metric_cards import render_kpi_cards
+from components.charts import (
+    render_monthly_trend_chart,
+    render_category_bar_chart,
+    render_donut_chart,
+)
+from components.insight_cards import render_sustainability_insights
+from components.progress_components import render_categorization_quality
+from components.transaction_components import render_recent_transactions
+
+
+# ── Streamlit Page Configuration ─────────────────────────────────────────────
 st.set_page_config(
-    page_title="Dashboard — Carbon Footprint Estimator",
-    page_icon="📊",
+    page_title="Dashboard — EcoTrack Carbon Intelligence",
+    page_icon="🌿",
     layout="wide",
+    initial_sidebar_state="expanded",
 )
 
-st.title("📊 Emissions Dashboard")
-st.caption("Carbon footprint overview for the last processed batch")
+# ── Render Custom Sidebar & Styles ───────────────────────────────────────────
+render_sidebar(current_page="Dashboard")
 
 
-def _load_from_session() -> pd.DataFrame | None:
-    return st.session_state.get("processed_df")
+# ── Load Data ─────────────────────────────────────────────────────────────────
+raw_session_df = st.session_state.get("processed_df")
+full_df = load_dashboard_data(raw_session_df)
 
 
-def _load_from_db() -> pd.DataFrame | None:
-    try:
-        from database.connection import get_session
-        from database.models import Transaction
-        session = get_session()
-        if session is None:
-            return None
-        rows = session.query(Transaction).order_by(Transaction.transaction_date.desc()).limit(500).all()
-        session.close()
-        if not rows:
-            return None
-        return pd.DataFrame([{
-            "date": r.transaction_date,
-            "cleaned_description": r.cleaned_description,
-            "amount": float(r.amount) if r.amount else 0,
-            "currency": r.currency,
-            "category": r.category,
-            "subcategory": r.subcategory,
-            "category_status": r.category_status,
-            "emissions_status": r.emissions_status,
-            "estimated_co2e_kg": float(r.estimated_co2e_kg) if r.estimated_co2e_kg else None,
-            "emissions_confidence": r.emissions_confidence,
-            "factor_id": r.factor_id,
-            "factor_source": r.factor_source,
-            "estimation_notes": r.estimation_notes,
-            "batch_id": r.batch_id,
-        } for r in rows])
-    except Exception:
-        return None
+# ── Section A: Header ─────────────────────────────────────────────────────────
+header_col1, header_col2 = st.columns([3, 1])
+
+with header_col1:
+    st.markdown("""
+    <div style="margin-bottom: 24px;">
+        <div style="font-size: 14px; font-weight: 600; color: #246B45; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+            <span>Good morning, Shreyas</span>
+            <span>👋</span>
+        </div>
+        <div style="font-size: 32px; font-weight: 800; color: #1F2933; letter-spacing: -0.03em; line-height: 1.15; margin-bottom: 6px;">
+            Your Carbon Footprint
+        </div>
+        <div style="font-size: 14.5px; color: #78847D; max-width: 650px;">
+            Understand the environmental impact of your everyday spending through India-specific hybrid emissions factors.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with header_col2:
+    st.markdown("""
+    <div style="text-align: right; margin-top: 8px;">
+        <span class="pill pill-green">
+            <span style="width: 6px; height: 6px; border-radius: 50%; background: #246B45;"></span>
+            Reporting Period Active
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
 
 
-df = _load_from_session()
-if df is None:
-    df = _load_from_db()
+# ── Check Data Availability ───────────────────────────────────────────────────
+if full_df is None or full_df.empty:
+    st.markdown("""
+    <div class="eco-card" style="text-align: center; padding: 48px 24px;">
+        <div style="width: 54px; height: 54px; border-radius: 14px; background: #E7F3EB; color: #246B45; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; font-size: 24px;">
+            🌿
+        </div>
+        <div style="font-size: 20px; font-weight: 700; color: #1F2933; margin-bottom: 8px;">
+            No Transaction Data Loaded Yet
+        </div>
+        <div style="font-size: 14px; color: #78847D; max-width: 480px; margin: 0 auto 24px auto;">
+            Upload your bank statement (PDF or CSV) on the Upload page to categorize your spending and analyze your emissions.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-if df is None or df.empty:
-    st.info(
-        "No processed transaction data found. "
-        "Go to **Upload Transactions** to process a file first.",
-        icon="📁",
-    )
+    if st.button("📁 Go to Statement Upload", type="primary"):
+        st.switch_page("pages/1_Upload.py")
     st.stop()
 
-# ---- Coverage metrics ----
-from pipeline.emissions import compute_coverage_metrics
-metrics = compute_coverage_metrics(df)
 
-st.subheader("Summary")
-col1, col2, col3, col4, col5 = st.columns(5)
-col1.metric(
-    "🌿 Total CO₂e",
-    f"{metrics['estimated_co2e_kg']:.2f} kg" if metrics['estimated_co2e_kg'] else "—",
-    help="Supported transactions only",
-)
-col2.metric("💰 Total Eligible Spend", f"₹{metrics['total_expense_spend_inr']:,.0f}")
-col3.metric(
-    "📊 Spend Coverage",
-    f"{metrics['supported_spend_pct']:.1f}%" if metrics['supported_spend_pct'] else "—",
-)
-col4.metric("✅ Estimated Txns", metrics["estimated_count"])
-col5.metric("❓ Unsupported", metrics["unsupported_count"])
+# ── Period Filter Bar ─────────────────────────────────────────────────────────
+min_date, max_date = get_date_range(full_df)
 
-st.info(
-    "⚠️ **Partial estimate** — only transactions with supported India-specific factors are included. "
-    "This is not your complete carbon footprint.",
-    icon="ℹ️",
-)
-st.divider()
+filter_container = st.container()
+with filter_container:
+    col_f1, col_f2, col_f3 = st.columns([2, 2, 3])
 
-# ---- Category breakdown chart ----
-try:
-    import plotly.express as px
-
-    st.subheader("Category Emissions Breakdown")
-    estimated_df = df[df.get("emissions_status", pd.Series(dtype=str)) == "estimated"].copy() if "emissions_status" in df.columns else pd.DataFrame()
-
-    if estimated_df.empty:
-        st.info("No estimated transactions to chart.")
-    else:
-        cat_group = (
-            estimated_df.groupby("category")["estimated_co2e_kg"]
-            .sum()
-            .reset_index()
-            .rename(columns={"category": "Category", "estimated_co2e_kg": "CO₂e (kg)"})
-            .sort_values("CO₂e (kg)", ascending=True)
+    with col_f1:
+        start_bound = min_date if min_date else None
+        filter_start = st.date_input(
+            "📅 From Date",
+            value=min_date,
+            min_value=min_date,
+            max_value=max_date,
+            key="dash_from_date",
         )
 
-        fig = px.bar(
-            cat_group,
-            x="CO₂e (kg)",
-            y="Category",
-            orientation="h",
-            title="CO₂e by Category (estimated transactions only)",
-            color="CO₂e (kg)",
-            color_continuous_scale=["#D8F3DC", "#2D6A4F"],
-            labels={"CO₂e (kg)": "kg CO₂e"},
+    with col_f2:
+        filter_end = st.date_input(
+            "📅 To Date",
+            value=max_date,
+            min_value=min_date,
+            max_value=max_date,
+            key="dash_to_date",
         )
-        fig.update_layout(
-            plot_bgcolor="#FAF8F5",
-            paper_bgcolor="#FAF8F5",
-            coloraxis_showscale=False,
-            height=max(300, len(cat_group) * 35),
-        )
-        st.plotly_chart(fig, use_container_width=True)
 
-    # ---- Monthly trend ----
-    st.subheader("Monthly Trend")
-    if "date" in df.columns and "estimated_co2e_kg" in df.columns:
-        trend_df = df.copy()
-        trend_df["date"] = pd.to_datetime(trend_df["date"], errors="coerce")
-        trend_df = trend_df.dropna(subset=["date"])
-        if not trend_df.empty:
-            trend_df["month"] = trend_df["date"].dt.to_period("M").astype(str)
-            monthly = (
-                trend_df[trend_df.get("emissions_status", pd.Series(dtype=str)) == "estimated"]
-                .groupby("month")["estimated_co2e_kg"]
-                .sum()
-                .reset_index()
-                .rename(columns={"month": "Month", "estimated_co2e_kg": "CO₂e (kg)"})
-            )
-            if len(monthly) > 1:
-                fig2 = px.line(
-                    monthly,
-                    x="Month",
-                    y="CO₂e (kg)",
-                    title="Monthly CO₂e Trend",
-                    markers=True,
-                    color_discrete_sequence=["#2D6A4F"],
-                )
-                fig2.update_layout(
-                    plot_bgcolor="#FAF8F5",
-                    paper_bgcolor="#FAF8F5",
-                )
-                st.plotly_chart(fig2, use_container_width=True)
-            else:
-                st.info("Need at least 2 months of data for a trend chart.")
-        else:
-            st.info("No date data available for trend analysis.")
-    else:
-        st.info("Date or emissions columns not found for trend chart.")
+    with col_f3:
+        st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+        if min_date and max_date:
+            st.markdown(f"""
+            <div style="font-size: 12.5px; color: #78847D; padding-top: 4px;">
+                Statement Range: <strong>{min_date.strftime('%d %b %Y')}</strong> — <strong>{max_date.strftime('%d %b %Y')}</strong>
+            </div>
+            """, unsafe_allow_html=True)
 
-except ImportError:
-    st.warning("Install `plotly` for interactive charts.", icon="📊")
+# Filter dataset to selected range
+filtered_df = filter_by_period(full_df, start_date=filter_start, end_date=filter_end)
 
-st.divider()
+if filtered_df.empty:
+    st.warning("No transactions found within the selected date range. Please broaden your filter.", icon="⚠️")
+    st.stop()
 
-# ---- Unsupported spend table ----
-st.subheader("❓ Unsupported & Needs Review")
-if "emissions_status" in df.columns:
-    unsupported = df[df["emissions_status"].isin(["unsupported", "needs_review"])]
-    if unsupported.empty:
-        st.success("All eligible transactions have emissions estimates.", icon="✅")
-    else:
-        st.caption(
-            f"{len(unsupported)} transactions could not be estimated. "
-            "See 'estimation_notes' for reasons."
-        )
-        show_cols = [c for c in ["date", "cleaned_description", "amount", "category", "emissions_status", "estimation_notes"] if c in unsupported.columns]
-        st.dataframe(unsupported[show_cols], use_container_width=True)
-else:
-    st.info("Process a file first to see unsupported transactions.")
+
+# ── Calculate Real Analytics ──────────────────────────────────────────────────
+kpis = compute_kpis(filtered_df)
+monthly_trend_df = get_monthly_trend(filtered_df)
+category_breakdown_df = get_category_breakdown(filtered_df)
+donut_df = get_donut_data(category_breakdown_df)
+cat_stats = get_categorization_stats(filtered_df)
+highlights = get_sustainability_highlights(filtered_df, category_breakdown_df)
+
+
+# ── Section B: Custom KPI Cards ───────────────────────────────────────────────
+render_kpi_cards(kpis)
+
+
+# ── Section C & Section D: Monthly Trend and Category Breakdown ───────────────
+chart_col1, chart_col2 = st.columns([1, 1])
+
+with chart_col1:
+    st.markdown("""
+    <div class="eco-card">
+        <div class="eco-card-header">
+            <div>
+                <h3 class="eco-card-title">Carbon Footprint Over Time</h3>
+                <p class="eco-card-subtitle">Track how your estimated emissions change month by month</p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+    render_monthly_trend_chart(monthly_trend_df)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+with chart_col2:
+    st.markdown("""
+    <div class="eco-card">
+        <div class="eco-card-header">
+            <div>
+                <h3 class="eco-card-title">Where Your Emissions Come From</h3>
+                <p class="eco-card-subtitle">CO₂e emissions ranked by transaction spending category</p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+    render_category_bar_chart(category_breakdown_df)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+# ── Section E & Section F: Composition Donut & Sustainability Highlights ──────
+bottom_col1, bottom_col2 = st.columns([1, 1])
+
+with bottom_col1:
+    st.markdown("""
+    <div class="eco-card">
+        <div class="eco-card-header">
+            <div>
+                <h3 class="eco-card-title">Carbon Footprint Distribution</h3>
+                <p class="eco-card-subtitle">Proportional breakdown of estimated spending emissions</p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+    render_donut_chart(donut_df, total_co2e_kg=kpis["total_co2e_kg"])
+    st.markdown("</div>", unsafe_allow_html=True)
+
+with bottom_col2:
+    st.markdown("""
+    <div class="eco-card">
+        <div class="eco-card-header">
+            <div>
+                <h3 class="eco-card-title">Sustainability Highlights</h3>
+                <p class="eco-card-subtitle">Automated rule-based insights from your spending profile</p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+    render_sustainability_insights(highlights)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+# ── Section G: Categorization Quality ─────────────────────────────────────────
+st.markdown("""
+<div class="eco-card">
+    <div class="eco-card-header">
+        <div>
+            <h3 class="eco-card-title">Transaction Categorization & Factor Coverage</h3>
+            <p class="eco-card-subtitle">Pipeline transparency: identifying activity vs. applying verified India factors</p>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
+render_categorization_quality(cat_stats)
+st.markdown("</div>", unsafe_allow_html=True)
+
+
+# ── Section H: Recent Transactions ────────────────────────────────────────────
+st.markdown("""
+<div class="eco-card">
+    <div class="eco-card-header">
+        <div>
+            <h3 class="eco-card-title">Recent Transactions</h3>
+            <p class="eco-card-subtitle">Latest spending activity with estimated emissions</p>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
+
+render_recent_transactions(filtered_df, limit=5)
+
+col_act1, col_act2 = st.columns([3, 1])
+with col_act2:
+    if st.button("🔍 View All Transactions", key="btn_view_all_tx"):
+        st.switch_page("pages/4_Transactions.py")
+
+st.markdown("</div>", unsafe_allow_html=True)
+
+
+# ── Footer ────────────────────────────────────────────────────────────────────
+st.markdown("""
+<div style="text-align: center; font-size: 12px; color: #78847D; margin-top: 36px; padding-top: 18px; border-top: 1px solid #E7EAE5;">
+    EcoTrack · India Emissions Engine (CEA V21.0, HCES, BEE, MoEFCC) · Confidential & Privacy-First
+</div>
+""", unsafe_allow_html=True)

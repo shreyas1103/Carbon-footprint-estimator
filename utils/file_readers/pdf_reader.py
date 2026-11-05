@@ -17,13 +17,17 @@ import pdfplumber
 
 from utils.file_readers.base import ExtractionResult
 
+print("### UPDATED PDF READER LOADED ###")
 # OCR fallback — optional heavy dependencies
 try:
-    import fitz  # PyMuPDF
+    import pymupdf
+except ImportError:
+    pymupdf = None
+
+try:
     import pytesseract
     from PIL import Image
 except ImportError:
-    fitz = None
     pytesseract = None
     Image = None
 
@@ -177,29 +181,72 @@ def group_words_into_lines(words, tolerance=2.5):
 # HEADER DETECTION
 # ============================================================
 
+def _canonical_header(line_text: str) -> Optional[str]:
+    """Map a complete header phrase to a known column name."""
+    normalized = normalize_text(line_text).lower()
+    normalized = re.sub(r"[^a-z0-9/ ]+", " ", normalized)
+    normalized = normalize_text(normalized)
+
+    for kind, aliases in HEADER_ALIASES.items():
+        if normalized in aliases:
+            return kind
+
+    # Also recognize aliases embedded in a longer header phrase.
+    candidates = []
+    for kind, aliases in HEADER_ALIASES.items():
+        for alias in aliases:
+            if re.search(rf"(?<![a-z0-9]){re.escape(alias)}(?![a-z0-9])", normalized):
+                candidates.append((len(alias), kind))
+    if candidates:
+        candidates.sort(reverse=True)
+        return candidates[0][1]
+    return None
+
+
 def find_headers(words) -> dict:
-    lines = group_words_into_lines(words, tolerance=3)
-    best_line = None
-    best_score = -1
+    """
+    Detect column headers using complete visual lines and short word groups.
+    This handles multiword headers such as 'Transaction Date' and 'Debit Amount'
+    even when the PDF extractor returns each word separately.
+    Returns column-center x positions.
+    """
+    lines = group_words_into_lines(words, tolerance=4)
+    best = {}
+    best_score = 0
+
     for line in lines:
-        texts = [normalize_text(w.get("text", "")).lower() for w in line["words"]]
-        score = sum(
-            1 for aliases in HEADER_ALIASES.values()
-            if any(t in aliases for t in texts)
-        )
-        if score > best_score and score >= 2:
-            best_score = score
-            best_line = line["words"]
-    if best_line is None:
+        ordered = sorted(line["words"], key=lambda w: float(w.get("x0", 0)))
+        detected = []
+
+        # Check each word and contiguous groups of 2–4 words.
+        for i in range(len(ordered)):
+            for width in (1, 2, 3, 4):
+                chunk = ordered[i:i + width]
+                if len(chunk) != width:
+                    continue
+                phrase = normalize_text(
+                    " ".join(str(w.get("text", "")) for w in chunk)
+                ).lower()
+                kind = _canonical_header(phrase)
+                if kind:
+                    left = min(float(w.get("x0", 0)) for w in chunk)
+                    right = max(float(w.get("x1", w.get("x0", 0))) for w in chunk)
+                    detected.append((kind, (left + right) / 2, right - left))
+
+        # For each kind, retain the widest phrase match to avoid selecting
+        # only the word "date" from the phrase "transaction date".
+        by_kind = {}
+        for kind, center, width in detected:
+            if kind not in by_kind or width > by_kind[kind][0]:
+                by_kind[kind] = (width, center)
+
+        if len(by_kind) > best_score:
+            best_score = len(by_kind)
+            best = by_kind
+
+    if best_score < 2:
         return {}
-    headers = {}
-    for word in sorted(best_line, key=lambda x: float(x["x0"])):
-        text = normalize_text(word.get("text", "")).lower()
-        center = (float(word["x0"]) + float(word.get("x1", word["x0"]))) / 2
-        for kind, aliases in HEADER_ALIASES.items():
-            if text in aliases and kind not in headers:
-                headers[kind] = center
-    return headers
+    return {kind: center for kind, (_, center) in best.items()}
 
 
 # ============================================================
@@ -426,12 +473,12 @@ def parse_ocr_page(words, page_width) -> list[dict]:
 
 
 def ocr_pdf(pdf_data: bytes) -> list[dict]:
-    if fitz is None or pytesseract is None or Image is None:
+    if pymupdf is None or pytesseract is None or Image is None:
         return []
     results = []
-    document = fitz.open(stream=pdf_data, filetype="pdf")
+    document = pymupdf.open(stream=pdf_data, filetype="pdf")
     for page in document:
-        matrix = fitz.Matrix(2.5, 2.5)
+        matrix = pymupdf.Matrix(2.5, 2.5)
         pixmap = page.get_pixmap(matrix=matrix, alpha=False)
         image = Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples)
         data_dict = pytesseract.image_to_data(image, config="--psm 6", output_type=pytesseract.Output.DICT)
@@ -487,6 +534,106 @@ def _build_dataframe(transactions: list[dict]) -> pd.DataFrame:
     # Rename transaction_type → debit sign convention: debit = positive, credit = positive
     # Keep transaction_type as a column for the pipeline
     return df[["date", "description", "amount", "transaction_type"]]
+
+
+
+
+# ============================================================
+# TEXT-LAYOUT FALLBACK (SBI-style statements)
+# ============================================================
+
+_SBI_ROW_RE = re.compile(
+    r"^\s*(\d{1,2}[/-]\d{1,2}[/-]\d{4})\s+"
+    r"(\d{1,2}[/-]\d{1,2}[/-]\d{4})\s+"
+    r"(.+?)\s+"
+    r"(-|[\d,]+\.\d{2})\s+"       # reference/cheque column
+    r"(-|[\d,]+\.\d{2})\s+"       # debit
+    r"(-|[\d,]+\.\d{2})\s+"       # credit
+    r"(-|[\d,]+\.\d{2})\s*$"      # balance
+)
+
+def parse_sbi_text_pages(text_pages: list[str]) -> list[dict]:
+    """
+    Parse text-based SBI statements whose transaction table is extracted as
+    lines rather than reliably positioned table columns. Continuation lines
+    are appended to the previous transaction description.
+    """
+    transactions: list[dict] = []
+    current: Optional[dict] = None
+    pending_marker = ""
+
+    def save():
+        nonlocal current
+        if not current:
+            return
+        desc = clean_description(current.get("description", ""))
+        amount = current.get("amount")
+        date = current.get("date")
+        if date is not None and desc and amount is not None and amount > 0:
+            if desc.upper() not in _INVALID_DESCRIPTIONS:
+                transactions.append({
+                    "date": date,
+                    "description": desc,
+                    "amount": round(abs(float(amount)), 2),
+                    "transaction_type": current.get("transaction_type", "unknown"),
+                })
+        current = None
+
+    for page_text in text_pages:
+        for raw_line in (page_text or "").splitlines():
+            line = normalize_text(raw_line)
+            if not line:
+                continue
+
+            match = _SBI_ROW_RE.match(line)
+            if match:
+                marker = current.get("description", "") if current and current.get("date") is None else ""
+                save()
+                value_date, post_date, description, _ref, debit, credit, _balance = match.groups()
+                date = parse_date(value_date) or parse_date(post_date)
+                debit_value = clean_money(debit) if debit != "-" else None
+                credit_value = clean_money(credit) if credit != "-" else None
+
+                # SBI transaction descriptions commonly start with WDL/DEP TFR
+                # on the preceding line, so also use UPI/DR and UPI/CR markers.
+                description = normalize_text(marker + " " + description)
+                upper_desc = description.upper()
+                if debit_value is not None and debit_value > 0:
+                    amount, tx_type = debit_value, "debit"
+                elif credit_value is not None and credit_value > 0:
+                    amount, tx_type = credit_value, "credit"
+                else:
+                    amount, tx_type = None, "unknown"
+
+                current = {
+                    "date": date,
+                    "description": description,
+                    "amount": amount,
+                    "transaction_type": tx_type,
+                }
+                continue
+
+            # SBI statements place WDL TFR / DEP TFR immediately above a
+            # transaction row. Attach it to the row's description when possible.
+            if current is not None and current.get("date") is None:
+                # Preserve the marker until the next dated transaction row.
+                continue
+            if current is not None:
+                if line.upper() not in {"BALANCE", "STATEMENT OF ACCOUNT"} and not line.lower().startswith("page no."):
+                    current["description"] = normalize_text(current["description"] + " " + line)
+                continue
+
+            # Keep transaction type marker for the next dated transaction line.
+            if line.upper() in {"WDL TFR", "DEP TFR"}:
+                current = {
+                    "date": None,
+                    "description": line,
+                    "amount": None,
+                    "transaction_type": "debit" if line.upper().startswith("WDL") else "credit",
+                }
+
+    save()
+    return transactions
 
 
 # ============================================================
@@ -546,9 +693,21 @@ def read_pdf(file_bytes: bytes) -> ExtractionResult:
     except Exception as exc:
         warnings_list.append(f"pdfplumber extraction warning: {str(exc)[:200]}")
 
+    # ---- Method 1b: line-based text fallback for statements such as SBI ----
+    if not transactions and extracted_text_pages:
+        try:
+            transactions = parse_sbi_text_pages(extracted_text_pages)
+            if transactions:
+                warnings_list.append(
+                    "Transactions extracted using the line-based statement fallback. "
+                    "Review debit/credit classification before continuing."
+                )
+        except Exception as exc:
+            warnings_list.append(f"Line-based PDF fallback failed: {str(exc)[:200]}")
+
     # ---- Method 2: OCR fallback ----
     if not transactions:
-        if fitz is not None and pytesseract is not None:
+        if pymupdf is not None and pytesseract is not None and Image is not None:
             try:
                 transactions = ocr_pdf(file_bytes)
                 if transactions:
@@ -557,10 +716,16 @@ def read_pdf(file_bytes: bytes) -> ExtractionResult:
                 warnings_list.append(f"OCR fallback failed: {str(exc)[:200]}")
         elif is_scanned:
             warnings_list.append(
-                "Install PyMuPDF + pytesseract + Tesseract to enable OCR for scanned PDFs."
+                "Install PyMuPDF, pytesseract, Pillow, and the Tesseract OCR application "
+                "to enable OCR for scanned PDFs."
             )
 
     if not transactions:
+        if extracted_text_pages and any(page.strip() for page in extracted_text_pages):
+            warnings_list.append(
+                "PDF text was readable, but the parser could not identify transaction rows. "
+                "The bank statement may use unsupported header names or a different column layout."
+            )
         return ExtractionResult(
             dataframe=pd.DataFrame(),
             source_file_type="pdf",
@@ -568,8 +733,8 @@ def read_pdf(file_bytes: bytes) -> ExtractionResult:
             warnings=warnings_list,
             errors=[
                 "No transaction rows could be extracted from the PDF. "
-                "Please ensure it is a text-based bank statement (not a scanned image). "
-                "If scanned, install PyMuPDF and pytesseract for OCR support. "
+                "If selectable text exists, check the statement's headers and column layout. "
+                "If scanned, install PyMuPDF, pytesseract, Pillow, and the Tesseract OCR application. "
                 "Alternatively, export the statement as CSV or Excel from your bank's website."
             ],
             rows_extracted=0,

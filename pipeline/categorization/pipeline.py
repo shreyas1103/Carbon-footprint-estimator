@@ -2,12 +2,20 @@
 pipeline/categorization/pipeline.py
 Orchestrates all categorization tiers in priority order:
   0 → cache
+  2 → dictionary (exact/substring match — reliable rules first)
   1 → TF-IDF/LR classifier
-  2 → dictionary
   3 → fuzzy
   4 → embeddings (optional)
   5 → LLM (optional)
   → unclassified
+
+Rationale for ordering Tier 2 before Tier 1:
+  Dictionary rules are curated and deterministic.  An ML classifier
+  (Logistic Regression) always returns *some* class — even for inputs
+  far outside its training distribution — often with misleadingly high
+  confidence.  Running dictionary lookup first ensures that known
+  merchants (e.g. "INDANE GAS") receive the correct category before the
+  ML model has a chance to misclassify them.
 
 Higher-priority confident results are NEVER overwritten.
 Each failing tier falls through; one tier failing does not abort the batch.
@@ -39,7 +47,10 @@ def categorize_merchant(
     session=None,
 ) -> CategoryResult:
     """
-    Run the full five-tier categorization pipeline for a single merchant.
+    Run the full multi-tier categorization pipeline for a single merchant.
+
+    Execution order: 0 (cache) → 2 (dictionary) → 1 (ML) → 3 (fuzzy)
+                     → 4 (embeddings) → 5 (LLM) → unclassified.
 
     Args:
         merchant_key: normalized merchant key.
@@ -49,65 +60,115 @@ def categorize_merchant(
     Returns:
         CategoryResult with tier, method, confidence, status, reason.
     """
+    logger.debug("Categorizing merchant_key='%s'", merchant_key[:80])
+
     # ---- Tier 0: Cache ----
     try:
         result = tier0_cache.lookup_cache(merchant_key, session)
         if result and result.is_accepted():
+            logger.info(
+                "Tier 0 cache hit for '%s' → %s (confidence=%.2f)",
+                merchant_key[:50], result.category, result.confidence,
+            )
             return result
+        if result:
+            logger.debug("Tier 0 cache entry exists but not accepted (status=%s)", result.status)
     except Exception as exc:
-        logger.error("Tier 0 error for '%s': %s", merchant_key, str(exc)[:200])
+        logger.error("Tier 0 error for '%s': %s", merchant_key[:50], str(exc)[:200])
+
+    # ---- Tier 2: Dictionary (moved BEFORE Tier 1) ----
+    best_candidate: Optional[CategoryResult] = None
+    try:
+        result = tier2_dictionary.classify(merchant_key)
+        if result:
+            if result.status == "categorized" and result.confidence >= ACCEPT_THRESHOLD:
+                logger.info(
+                    "Tier 2 dictionary match for '%s' → %s (confidence=%.2f, reason=%s)",
+                    merchant_key[:50], result.category, result.confidence, result.reason,
+                )
+                _maybe_write_cache(merchant_key, cleaned_description, result, session)
+                return result
+            elif result.status == "categorized":
+                # Lower confidence dictionary match — still return it
+                # (dictionary matches are curated, so even lower confidence is trustworthy)
+                logger.info(
+                    "Tier 2 dictionary match (lower confidence) for '%s' → %s (confidence=%.2f)",
+                    merchant_key[:50], result.category, result.confidence,
+                )
+                _maybe_write_cache(merchant_key, cleaned_description, result, session)
+                return result
+            elif result.status == "needs_review":
+                # Hold as best candidate — keep trying subsequent tiers
+                logger.debug(
+                    "Tier 2 needs_review for '%s' → %s (holding as candidate)",
+                    merchant_key[:50], result.category,
+                )
+                best_candidate = result
+    except Exception as exc:
+        logger.error("Tier 2 error for '%s': %s", merchant_key[:50], str(exc)[:200])
 
     # ---- Tier 1: TF-IDF + LR ----
     try:
         result = tier1_classifier.classify(merchant_key)
         if result and result.is_accepted(ACCEPT_THRESHOLD):
-            _maybe_write_cache(merchant_key, cleaned_description, result, session)
-            return result
-    except Exception as exc:
-        logger.error("Tier 1 error for '%s': %s", merchant_key, str(exc)[:200])
-
-    # ---- Tier 2: Dictionary ----
-    try:
-        result = tier2_dictionary.classify(merchant_key)
-        if result:
-            if result.status == "categorized" and result.confidence >= ACCEPT_THRESHOLD:
-                _maybe_write_cache(merchant_key, cleaned_description, result, session)
-                return result
-            elif result.status == "needs_review":
-                # Hold as best candidate but keep trying higher tiers first
-                # (dictionary needs_review has lower priority than a confident exact match below)
-                # Return this as the final result if no better tier finds anything
-                pass
+            # If Tier 2 already flagged this as ambiguous (needs_review),
+            # ML must NOT override it.  Dictionary ambiguity is semantic
+            # (e.g. "bus" = school bus vs public transit, "hotel" = restaurant
+            # vs accommodation) and character n-gram agreement does not
+            # resolve the underlying ambiguity.  Only a human reviewer or
+            # additional context can resolve dictionary-flagged ambiguity.
+            if best_candidate and best_candidate.status == "needs_review":
+                logger.debug(
+                    "Tier 1 ML has result for '%s' → %s (confidence=%.2f) but "
+                    "Tier 2 flagged needs_review. Preserving dictionary ambiguity.",
+                    merchant_key[:50], result.category, result.confidence,
+                )
+                # Don't override — keep the dictionary's needs_review
             else:
-                # Lower confidence categorized — return
+                # No Tier 2 ambiguity — accept ML result normally
+                logger.info(
+                    "Tier 1 ML classifier for '%s' → %s (confidence=%.2f)",
+                    merchant_key[:50], result.category, result.confidence,
+                )
                 _maybe_write_cache(merchant_key, cleaned_description, result, session)
                 return result
-        best_candidate = result
+        elif result:
+            logger.debug(
+                "Tier 1 returned '%s' (confidence=%.2f) but below threshold or not accepted",
+                result.category, result.confidence,
+            )
     except Exception as exc:
-        logger.error("Tier 2 error for '%s': %s", merchant_key, str(exc)[:200])
-        best_candidate = None
+        logger.error("Tier 1 error for '%s': %s", merchant_key[:50], str(exc)[:200])
 
     # ---- Tier 3: Fuzzy ----
     try:
         result = tier3_fuzzy.classify(merchant_key)
         if result and result.status == "categorized" and result.confidence >= 0.7:
+            logger.info(
+                "Tier 3 fuzzy match for '%s' → %s (confidence=%.2f)",
+                merchant_key[:50], result.category, result.confidence,
+            )
             _maybe_write_cache(merchant_key, cleaned_description, result, session)
             return result
         if result and (best_candidate is None or result.confidence > best_candidate.confidence):
             best_candidate = result
     except Exception as exc:
-        logger.error("Tier 3 error for '%s': %s", merchant_key, str(exc)[:200])
+        logger.error("Tier 3 error for '%s': %s", merchant_key[:50], str(exc)[:200])
 
     # ---- Tier 4: Embeddings ----
     try:
         result = tier4_embedding.classify(merchant_key)
         if result and result.status == "categorized" and result.confidence >= 0.7:
+            logger.info(
+                "Tier 4 embedding match for '%s' → %s (confidence=%.2f)",
+                merchant_key[:50], result.category, result.confidence,
+            )
             _maybe_write_cache(merchant_key, cleaned_description, result, session)
             return result
         if result and (best_candidate is None or result.confidence > best_candidate.confidence):
             best_candidate = result
     except Exception as exc:
-        logger.error("Tier 4 error for '%s': %s", merchant_key, str(exc)[:200])
+        logger.error("Tier 4 error for '%s': %s", merchant_key[:50], str(exc)[:200])
 
     # ---- Tier 5: LLM ----
     try:
@@ -115,13 +176,19 @@ def categorize_merchant(
         if result and (best_candidate is None or result.confidence > best_candidate.confidence):
             best_candidate = result
     except Exception as exc:
-        logger.error("Tier 5 error for '%s': %s", merchant_key, str(exc)[:200])
+        logger.error("Tier 5 error for '%s': %s", merchant_key[:50], str(exc)[:200])
 
     # If we have a needs_review or low-confidence candidate, return it
     if best_candidate:
+        logger.info(
+            "Returning best candidate for '%s' → %s (status=%s, tier=%s, confidence=%.2f)",
+            merchant_key[:50], best_candidate.category, best_candidate.status,
+            best_candidate.tier, best_candidate.confidence,
+        )
         return best_candidate
 
     # ---- Unclassified ----
+    logger.info("No tier matched for '%s' → other_unclassified", merchant_key[:50])
     return CategoryResult(
         category="other_unclassified",
         subcategory=None,
